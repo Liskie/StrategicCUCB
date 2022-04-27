@@ -12,7 +12,7 @@ class Solver(object):
         """
         bandit (Bandit): the target bandit to solve.
         """
-#        assert isinstance(bandit, BernoulliBandit)
+        #        assert isinstance(bandit, BernoulliBandit)
         np.random.seed(int(time.time()))
 
         self.bandit = bandit
@@ -44,6 +44,7 @@ class Solver(object):
             self.actions.append(i)
             self.update_regret(i)
 
+
 class UCB1(Solver):
     def __init__(self, bandit, init_proba=1.0):
         super(UCB1, self).__init__(bandit)
@@ -66,8 +67,9 @@ class UCB1(Solver):
 
         return i
 
+
 class CUCB(Solver):
-    def __init__(self, bandit, init_proba=1.0, Bmax = 0, card = 2, scale = 0.1):
+    def __init__(self, bandit, init_proba=1.0, Bmax=0, card=2, scale=0.1):
         super(CUCB, self).__init__(bandit)
         self.t = 0
         self.estimates = np.zeros(self.bandit.n)
@@ -77,8 +79,8 @@ class CUCB(Solver):
         self.scale = scale
         self.best_combo = self.bandit.combinatorial_best(card)
         self.pulls = [i for i in range(self.bandit.n)]
-        #print(self.estimates)
-        #print(self.counts)
+        # print(self.estimates)
+        # print(self.counts)
 
     @property
     def estimated_probas(self):
@@ -88,24 +90,25 @@ class CUCB(Solver):
         self.t += 1
 
         # Pick the best one with consideration of upper confidence bounds.
-        #i = max(range(self.bandit.n), key=lambda x: self.estimates[x] + np.sqrt(
-        #    3 * np.log(self.t) / (2 * self.counts[x])) + self.Bmax / self.counts[x])
-        UCB_i = [self.estimates[x] + self.scale*np.sqrt(
-            3 * np.log(self.t) / (2 * self.counts[x])) + self.scale*(self.Bmax / self.counts[x]) for x in range(self.bandit.n)]#[0]
+        UCB_i = [self.estimates[x] +
+                 self.scale * np.sqrt(3 * np.log(self.t) / (2 * self.counts[x])) +
+                 self.scale * (self.Bmax / self.counts[x])
+                 for x in range(self.bandit.n)]  # [0]
         UCB_i = (-np.array(UCB_i)).argsort()[:self.card]
         played = []
         if UCB_i[0] not in self.bandit.best_arms and UCB_i[1] not in self.bandit.best_arms:
             self.pulls.append(self.pulls[-1] + 1)
         else:
             self.pulls.append(self.pulls[-1])
-        #play the best 5 arms
+        # play the best 5 arms
         for i in range(self.card):
             r = self.bandit.generate_reward(UCB_i[i])
-            self.estimates[UCB_i[i]] = (self.counts[UCB_i[i]] * self.estimates[UCB_i[i]] + r) / (self.counts[UCB_i[i]] + 1)
+            self.estimates[UCB_i[i]] = (self.counts[UCB_i[i]] * self.estimates[UCB_i[i]] + r) / (
+                        self.counts[UCB_i[i]] + 1)
             self.counts[UCB_i[i]] += 1
             played.append(UCB_i[i])
-        #print(played)
-        #print(self.estimates)
+        # print(played)
+        # print(self.estimates)
         return played
 
     def initialize(self, i):
@@ -113,7 +116,7 @@ class CUCB(Solver):
         other = np.random.randint(self.bandit.n - 1, size=1)
         if other[0] == i:
             other = np.random.randint(self.bandit.n - 1, size=1)
-        #print(other[0])
+        # print(other[0])
         r = self.bandit.generate_reward(other[0])
         self.estimates[other[0]] = (self.counts[other[0]] * self.estimates[other[0]] + r) / (self.counts[other[0]] + 1)
         self.counts[other[0]] += 1
@@ -130,15 +133,15 @@ class CUCB(Solver):
             played = self.initialize(t)
             self.actions.append(played)
             self.update_regret(played)
-        #print(self.estimates)
-        for _ in range(num_steps - self.bandit.n ):
+        # print(self.estimates)
+        for _ in range(num_steps - self.bandit.n):
             played = self.run_one_step()
 
             for i in played:
                 self.actions.append(i)
 
             self.update_regret(played)
-    
+
     def update_regret(self, arr_i):
         # i (int): index of the selected machine.
         total_prob = 0
@@ -147,17 +150,18 @@ class CUCB(Solver):
 
         self.regret += self.best_combo - total_prob
         self.regrets.append(self.regret)
-    
+
     def clear(self):
         self.regret = 0
         self.regrets = []
         self.estimates = np.zeros(self.bandit.n)
         self.counts = np.zeros(self.bandit.n)
-    
+
+
 class naive_CUCB(Solver):
-    def __init__(self, bandit, init_proba=1.0, Bmax = 0, card = 2, scale = 0.1):
+    def __init__(self, bandit, init_proba=1.0, Bmax=0, card=2, scale=0.1):
         super(naive_CUCB, self).__init__(bandit)
-        self.t = 0
+        self.t = 0 # time step
         self.estimates = np.zeros(self.bandit.n)
         self.counts = np.zeros(self.bandit.n)
         self.Bmax = Bmax
@@ -165,8 +169,8 @@ class naive_CUCB(Solver):
         self.scale = scale
         self.best_combo = self.bandit.combinatorial_best(card)
         self.pulls = [i for i in range(self.bandit.n)]
-        #print(self.estimates)
-        #print(self.counts)
+        # print(self.estimates)
+        # print(self.counts)
 
     @property
     def estimated_probas(self):
@@ -176,24 +180,27 @@ class naive_CUCB(Solver):
         self.t += 1
 
         # Pick the best one with consideration of upper confidence bounds.
-        #i = max(range(self.bandit.n), key=lambda x: self.estimates[x] + np.sqrt(
-        #    3 * np.log(self.t) / (2 * self.counts[x])) + self.Bmax / self.counts[x])
-        UCB_i = [self.estimates[x] + self.scale*np.sqrt(
-            3 * np.log(self.t) / (2 * self.counts[x])) for x in range(self.bandit.n)]#[0]
-        UCB_i = (-np.array(UCB_i)).argsort()[:self.card]
+        UCB_i = [self.estimates[x] +  # Mean of all outcomes of arm i so far
+                 self.scale * np.sqrt(3 * np.log(self.t) / (2 * self.counts[x])) # ucb, scale = 1 by default
+                 for x in range(self.bandit.n)]
+
+        UCB_i = (-np.array(UCB_i)).argsort()[:self.card] # the best arm index when card = 1
+
         if UCB_i[0] not in self.bandit.best_arms and UCB_i[1] not in self.bandit.best_arms:
             self.pulls.append(self.pulls[-1] + 1)
         else:
             self.pulls.append(self.pulls[-1])
+
         played = []
-        #play the best card num arms
+        # play the best card num arms
         for i in range(self.card):
-            r = self.bandit.generate_reward(UCB_i[i])
-            self.estimates[UCB_i[i]] = (self.counts[UCB_i[i]] * self.estimates[UCB_i[i]] + r) / (self.counts[UCB_i[i]] + 1)
+            r = self.bandit.generate_reward(UCB_i[i]) # UCB_i[i} is the best arm index
+            self.estimates[UCB_i[i]] = (self.counts[UCB_i[i]] * self.estimates[UCB_i[i]] + r) \
+                                       / (self.counts[UCB_i[i]] + 1) # New mean of the arm total output
             self.counts[UCB_i[i]] += 1
             played.append(UCB_i[i])
-        #print(played)
-        #print(self.estimates)
+        # print(played)
+        # print(self.estimates)
         return played
 
     def initialize(self, i):
@@ -216,7 +223,7 @@ class naive_CUCB(Solver):
                 self.actions.append(i)
 
             self.update_regret(played)
-    
+
     def update_regret(self, arr_i):
         # i (int): index of the selected machine.
         total_prob = 0

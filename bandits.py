@@ -13,8 +13,8 @@ class Bandit(object):
 class BernoulliBandit(Bandit):
     def __init__(self, n, probas=None, budget = None, LSI = True):
         assert probas is None or len(probas) == n
-        self.n = n
-        self.B = [0 for i in range(n)]
+        self.n = n # number of arms(crowd workers)
+        self.B = [0 for i in range(n)] # budget
         self.count = [0 for i in range(n)]
         self.LSI = LSI
         if probas is None:
@@ -54,10 +54,6 @@ class BernoulliBandit(Bandit):
             else:
                 return reward
 
-        
-        
-            
-    
     def combinatorial_best(self, card = 2):
         best_arms = (-np.array(self.probas)).argsort()[:card]
         print("best arms", best_arms)

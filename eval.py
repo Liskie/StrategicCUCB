@@ -54,7 +54,7 @@ def experiment(K, N, card = 3):
     each with a randomly initialized reward probability.
 
     Args:
-        K (int): number of slot machiens.
+        K (int): number of slot machines.
         N (int): number of time steps to try.
     """
     prob = [0.1, 0.2, 0.3, 0.4, 0.45, 0.56, 0.6, 0.55, 0.9, 0.95]
