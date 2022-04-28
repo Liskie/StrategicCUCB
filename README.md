@@ -4,7 +4,7 @@ The repo features the experimental analysis on [Combinatorial Bandits under Stra
 
 ## Dependency
 
-* python3.6.5
+
 * numpy
 * matplotlib
 

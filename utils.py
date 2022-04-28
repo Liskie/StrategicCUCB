@@ -2,13 +2,12 @@ import contextlib
 import json
 import collections
 import os
-from typing import List
+from typing import List, Union
 
 from seqeval.metrics import accuracy_score
 from seqeval.metrics import classification_report
 from seqeval.metrics import f1_score
 import time
-
 
 def read_file(filename):
     '''
@@ -203,6 +202,7 @@ def get_f1_with_dict(worker_data, silver_dict):
 
 data = read_file('all-crowd.json')
 
+
 def get_worker_ids() -> List[int]:
     '''
     Return all worker ids present in the annotations.
@@ -211,7 +211,8 @@ def get_worker_ids() -> List[int]:
     '''
     return get_worker_list(data)
 
-def get_super_arm_f1_by_ids(worker_ids: List[int]) -> float:
+
+def get_super_arm_f1_by_id(worker_id: Union[List[int], int]) -> float:
     '''
     Calculate the macro mean F-1 score of all arms(workers) in the super-arm.
     Args:
@@ -220,27 +221,29 @@ def get_super_arm_f1_by_ids(worker_ids: List[int]) -> float:
         Float value of F-1 score
     '''
     with open(os.devnull, "w") as null, contextlib.redirect_stdout(null):
-        worker_data = get_worker_list_annotations(data, worker_ids)
+        if isinstance(worker_id, list):
+            worker_data = get_worker_list_annotations(data, worker_id)
+        elif isinstance(worker_id, int):
+            worker_data = get_worker_list_annotations(data, [worker_id])
+        else:
+            raise TypeError('Input is neither an id nor list of ids.')
         sliver_data_dict = get_sliver_dict(data)
         f1_score = get_f1_with_dict(worker_data, sliver_data_dict)
         return f1_score
 
 
 if __name__ == "__main__":
-    print(get_worker_ids())
-    print(get_super_arm_f1_by_ids([0, 1, 2]))
+    data = read_file('all-crowd.json')
+    worker_list = [2, 3, 4, 5, 6, 7]
+    anno_work_count(data)
+    worker_data = get_worker_list_annotations(data, worker_list)
 
-    # data = read_file('all-crowd.json')
-    # worker_list = [2, 3, 4, 5, 6, 7]
-    # anno_work_count(data)
-    # worker_data = get_worker_list_annotations(data, worker_list)
-    #
-    # # sliver data frame:list
-    # # sliver_data = get_sliver(data)
-    # # f1_score = get_f1(worker_data,sliver_data)
-    # # print(f1_score)
-    #
-    # # sliver data frame:dict
-    # sliver_data_dict = get_sliver_dict(data)
-    # f1_score = get_f1_with_dict(worker_data, sliver_data_dict)
+    # sliver data frame:list
+    # sliver_data = get_sliver(data)
+    # f1_score = get_f1(worker_data,sliver_data)
     # print(f1_score)
+
+    # sliver data frame:dict
+    sliver_data_dict = get_sliver_dict(data)
+    f1_score = get_f1_with_dict(worker_data, sliver_data_dict)
+    print(f1_score)
