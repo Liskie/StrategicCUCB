@@ -2,12 +2,14 @@ import contextlib
 import json
 import collections
 import os
-from typing import List, Union
+from functools import reduce
+from typing import List, Union, NoReturn
 
 from seqeval.metrics import accuracy_score
 from seqeval.metrics import classification_report
 from seqeval.metrics import f1_score
 import time
+
 
 def read_file(filename):
     '''
@@ -200,7 +202,7 @@ def get_f1_with_dict(worker_data, silver_dict):
     return f1_score(y_true, y_pred, average='macro')
 
 
-data = read_file('all-crowd.json')
+data = read_file('train.json')
 
 
 def get_worker_ids() -> List[int]:
@@ -216,7 +218,7 @@ def get_super_arm_f1_by_id(worker_id: Union[List[int], int]) -> float:
     '''
     Calculate the macro mean F-1 score of all arms(workers) in the super-arm.
     Args:
-        worker_ids: List of worker ids
+        worker_ids: List of worker ids or a single worker id.
     Returns:
         Float value of F-1 score
     '''
@@ -232,18 +234,52 @@ def get_super_arm_f1_by_id(worker_id: Union[List[int], int]) -> float:
         return f1_score
 
 
+def gen_train_data_with_picked_super_arm(worker_ids: Union[List[int], int]) -> NoReturn:
+    '''
+    Generate train data for the oei process with the picked super-arm.
+    Args:
+        worker_ids: List of worker ids or a single worker id.
+    '''
+    picked_data = []
+    for line in data:
+        line['annotations'] = [annotation for annotation in line['annotations'] if annotation['user'] in worker_ids]
+        line['bestUsers'] = [user for user in line['bestUsers'] if user in worker_ids]
+        if line['annotations']:  # is not empty:
+            picked_data.append(line)
+
+    print(f'{len(picked_data)} out of {len(data)} sentences have annotations after worker selection. '
+          f'Coverage rate is{len(picked_data) / len(data): .02%}')
+    get_avg_num_annotations = lambda dataset: reduce(lambda num1, num2: num1 + num2,
+                                                  map(lambda line: len(line['annotations']), dataset)) / len(dataset)
+    print(f'Average number of annotations per sentence is{get_avg_num_annotations(picked_data): .02f} '
+          f'after worker selection. Before it\'s{get_avg_num_annotations(data): .02f}')
+
+    with open('train-picked.json', 'w') as out:
+        # json.dump(data, out, ensure_ascii=False, indent=2)
+        # To ensure the format to be exactly the same as train.json, we manually dump the json data.
+        out.write('[')
+        for index, line in enumerate(picked_data):
+            out.write(json.dumps(line, ensure_ascii=False))
+            if index != len(picked_data) - 1:
+                out.write(',\n')
+            else:
+                out.write(']')
+
+
 if __name__ == "__main__":
-    data = read_file('all-crowd.json')
-    worker_list = [2, 3, 4, 5, 6, 7]
-    anno_work_count(data)
-    worker_data = get_worker_list_annotations(data, worker_list)
+    gen_train_data_with_picked_super_arm([62, 67])
 
-    # sliver data frame:list
-    # sliver_data = get_sliver(data)
-    # f1_score = get_f1(worker_data,sliver_data)
+    # data = read_file('all-crowd.json')
+    # worker_list = [2, 3, 4, 5, 6, 7]
+    # anno_work_count(data)
+    # worker_data = get_worker_list_annotations(data, worker_list)
+    #
+    # # sliver data frame:list
+    # # sliver_data = get_sliver(data)
+    # # f1_score = get_f1(worker_data,sliver_data)
+    # # print(f1_score)
+    #
+    # # sliver data frame:dict
+    # sliver_data_dict = get_sliver_dict(data)
+    # f1_score = get_f1_with_dict(worker_data, sliver_data_dict)
     # print(f1_score)
-
-    # sliver data frame:dict
-    sliver_data_dict = get_sliver_dict(data)
-    f1_score = get_f1_with_dict(worker_data, sliver_data_dict)
-    print(f1_score)

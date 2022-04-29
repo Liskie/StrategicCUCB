@@ -7,7 +7,7 @@ import numpy as np
 
 from bandits import BernoulliBandit, CABandit
 from solvers import Solver, UCB1, CUCB, naive_CUCB, CACUCB
-from utils import get_worker_ids
+from utils import get_worker_ids, gen_train_data_with_picked_super_arm
 
 
 def plot_results(solvers, solver_names, figname):
@@ -154,26 +154,15 @@ def run_CACUCB(num_step: int = 100):
     plt.show()
 
     print('Best super-arm:   ', sorted(list(bandit.arm_best_win_probs.keys())))
-    print('Picked super-arm: ', sorted(list(solver.action_history[-1])))
+    picked_super_arm = sorted(list(solver.action_history[-1]))
+    print('Picked super-arm: ', picked_super_arm)
+    gen_train_data_with_picked_super_arm(picked_super_arm)
 
     with open('action_log.txt', 'w') as out:
         for action in solver.action_history:
             out.write(f'{action}\n')
 
-    # with open('pred_probs_log.txt', 'w') as out:
-    #     for pred_probs in bandit.arm_pred_win_probs:
-    #         out.write(f'{pred_probs}\n')
 
-    # Average regret over 10 trials
-    # regret = [0]
-    # for _ in range(10):
-    #     bandit = CABandit(worker_ids)
-    #     solver = CACUCB(bandit)
-    #     solver.run(num_step)
-    #     regret = np.add(regret, solver.regret_history)
-    # regret = np.divide(regret, 10)
-
-    # plot_results(test_solvers, names, "results_K{}_N{}.png".format(K, N))
 
 
 if __name__ == '__main__':

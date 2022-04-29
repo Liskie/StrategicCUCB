@@ -143,7 +143,12 @@ class CACUCB:
 
         self.update_regret(picked_arm_ids)
 
-    def run(self, num_steps):
+    def run(self, num_steps: int) -> NoReturn:
+        '''
+        Run the whole process.
+        Args:
+            num_steps: Number of time steps to take.
+        '''
         assert self.bandit is not None
         assert num_steps >= self.bandit.arm_num, \
             f'Given num_steps {num_steps} are less than arm_num {self.bandit.arm_num}.'
