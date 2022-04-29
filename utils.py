@@ -245,6 +245,12 @@ def gen_train_data_with_picked_super_arm(worker_ids: Union[List[int], int]) -> N
         line['annotations'] = [annotation for annotation in line['annotations'] if annotation['user'] in worker_ids]
         line['bestUsers'] = [user for user in line['bestUsers'] if user in worker_ids]
         if line['annotations']:  # is not empty:
+            is_all_annotations_useless = True
+            for annotation in line['annotations']:
+                if not annotation['start_offset'] == annotation['end_offset'] == -1:
+                    is_all_annotations_useless = False
+            if is_all_annotations_useless:
+                continue
             picked_data.append(line)
 
     print(f'{len(picked_data)} out of {len(data)} sentences have annotations after worker selection. '
